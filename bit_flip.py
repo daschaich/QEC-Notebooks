@@ -29,6 +29,7 @@ error_probs = np.arange(0, 0.101, 0.001)
 # Argument 'init' chooses between |0> and |+> initial state
 def scan_probs(init):
     success_rates = []
+    uncorr_rates = []
     for p_err in error_probs:
         bit_flip = QuantumCircuit(q, c)     # Create quantum circuit
 
@@ -83,15 +84,19 @@ def scan_probs(init):
         # Get the counts from the result
         counts = result.get_counts()
 
-        num_successes = 0
+        num_success = 0
+        raw_success = 0
         counts_dict = dict(counts)
         for key, value in counts_dict.items():
             if key[:3] == '000':
-                num_successes += value
-        success_rates.append(num_successes / float(Nshots))
-        print("%.3g %.3g" % (p_err, success_rates[-1]))
+                num_success += value
+                if key == '000 00':     # Correct without correction
+                    raw_success += value
+        success_rates.append(num_success / float(Nshots))
+        uncorr_rates.append(raw_success / float(Nshots))
+        print("%.3g %.3g %.3g" % (p_err, success_rates[-1], uncorr_rates[-1]))
 
-    return success_rates
+    return success_rates, uncorr_rates
 # ------------------------------------------------------------------
 
 
@@ -107,7 +112,7 @@ for state in ['zero', 'plus']:
         # Blank line in output to separate results
         print("\nLogical+ initial state")
 
-    success_rates = scan_probs(state)
+    success_rates, uncorr_rates = scan_probs(state)
 
     # Print runtime here to ignore time spent looking at plot
     runtime += time.time()
@@ -119,7 +124,9 @@ for state in ['zero', 'plus']:
       title = 'Logical+ performance for 3 qubit bit flip code'
 
     # Plot the success rate as a function of the error probability
-    plt.plot(error_probs, success_rates)
+    # TODO: ADD UNCORRECTED VS CORRECTED...
+    plt.plot(error_probs, success_rates, label='Corrected')
+    plt.plot(error_probs, uncorr_rates, label='Uncorrected')
     plt.title(title)
     plt.xlabel('Error probability')
     plt.ylabel('Success rate')
