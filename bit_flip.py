@@ -130,5 +130,6 @@ for state in ['zero', 'plus']:
     plt.title(title)
     plt.xlabel('Error probability')
     plt.ylabel('Success rate')
+    plt.legend(loc='lower left')
     plt.show()
 # ------------------------------------------------------------------
